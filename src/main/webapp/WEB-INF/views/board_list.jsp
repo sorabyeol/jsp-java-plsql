@@ -139,7 +139,7 @@ function drawPaging(currentPage, totalPage) {
 <body>
 
 <div class="board-header">
-    <h3>게시판 목록</h3>
+    <h3>jsp-java-plsql 게시판 목록</h3>
     <a href="${pageContext.request.contextPath}/board/boardWrite.do" class="btn-write">글쓰기</a>
 </div>
 
