@@ -15,8 +15,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.jspjavaplsql.board.service.BoardService;
+
 
 
 @Controller
@@ -109,5 +113,71 @@ public class BoardController {
         response.getOutputStream().write(fileByte);
         response.getOutputStream().flush();
         response.getOutputStream().close();
+    }
+    
+   // 1. 글쓰기 화면(JSP)을 열어주는 매핑
+    @RequestMapping("/boardWrite.do")
+    public String boardWrite() {
+        // WEB-INF/views/board_write.jsp를 찾아갑니다.
+        return "board_write";
+    }
+
+    // 2. 글 등록 버튼을 눌렀을 때 데이터를 받는 매핑
+    @RequestMapping("/insertBoard.do")
+    public String insertBoard(@RequestParam Map<String, Object> map, 
+                              @RequestParam("uploadFile") MultipartFile[] uploadFile) throws Exception {
+        
+        // 사용자가 입력한 제목, 작성자, 내용 등은 'map'에 담깁니다.
+        // 첨부한 파일은 'uploadFile' 객체에 담깁니다.
+        
+        // Service단에 저장을 요청합니다.
+        boardService.insertBoard(map, uploadFile);
+        
+        // 저장이 끝나면 다시 목록 화면으로 보냅니다.
+        return "redirect:/board/boardList.do";
+    }
+    
+    @RequestMapping("/deleteBoard.do")
+    public String deleteBoard(@RequestParam("boardId") int boardId, RedirectAttributes rttr) {
+        try {
+            boardService.deleteBoard(boardId);
+            // 성공 메시지 전달
+            rttr.addFlashAttribute("msg", "삭제 완료 되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 실패 메시지 및 원인 전달
+            rttr.addFlashAttribute("msg", "삭제 실패되었습니다. 실패원인 : " + e.getMessage());
+        }
+        
+        return "redirect:/board/boardList.do";
+    }
+    
+    
+    // 수정 화면으로 이동
+    @RequestMapping("/updateBoard.do")
+    public String updateBoard(@RequestParam("boardId") int boardId, Model model) throws Exception {
+        Map<String, Object> board = boardService.selectBoardDetail(boardId);
+        List<Map<String, Object>> fileList = boardService.selectBoardFileList(boardId);
+        
+        model.addAttribute("board", board);
+        model.addAttribute("fileList", fileList);
+        
+        return "board_update"; // JSP는 views 바로 아래 있으니 파일명만!
+    }
+
+    @RequestMapping("/updateBoardAction.do")
+    public String updateBoardAction(@RequestParam Map<String, Object> map, 
+                                    @RequestParam(value="delFiles", required=false) int[] delFiles,
+                                    MultipartHttpServletRequest request, 
+                                    RedirectAttributes rttr) {
+        try {
+            // 서비스 호출 시 delFiles 파라미터 추가
+            boardService.updateBoard(map, request, delFiles);
+            rttr.addFlashAttribute("msg", "수정이 완료되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            rttr.addFlashAttribute("msg", "수정 실패!");
+        }
+        return "redirect:/board/boardDetail.do?boardId=" + map.get("BOARD_ID");
     }
 }
