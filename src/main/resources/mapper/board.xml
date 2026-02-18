@@ -1,104 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="board">
 
-    <select id="selectBoardList" parameterType="map" resultType="map">
-        SELECT 
-            BOARD_ID, TITLE, WRITER, VIEW_COUNT,
-            TO_CHAR(CREATED_DATE, 'YYYY-MM-DD') as CREATED_DATE,
-            TO_CHAR(CONTENT) as CONTENT
-        FROM BOARD
-        ORDER BY BOARD_ID DESC
+    <resultMap id="boardListMap" type="java.util.Map">
+        <result property="BOARD_ID" column="BOARD_ID"/>
+    </resultMap>
+
+    <select id="selectBoardList"
+            statementType="CALLABLE"
+            parameterType="map">
+
+        { CALL SP_BOARD_LIST(
+            #{startNum, mode=IN, jdbcType=INTEGER},
+            #{endNum, mode=IN, jdbcType=INTEGER},
+            #{resultCursor, mode=OUT, jdbcType=CURSOR,
+              javaType=java.sql.ResultSet,
+              resultMap=boardListMap}
+        )}
+
     </select>
 
-    <select id="selectBoardCount" resultType="int">
-        SELECT COUNT(*) FROM BOARD
+    <select id="selectBoardCount" statementType="CALLABLE" parameterType="map">
+        { CALL SP_BOARD_COUNT(
+            #{totalCount, mode=OUT, jdbcType=INTEGER}
+        )}
     </select>
-    
+
     <select id="selectBoardDetail" parameterType="int" resultType="map">
-        SELECT 
-            BOARD_ID, TITLE, WRITER, VIEW_COUNT,
-            TO_CHAR(CREATED_DATE, 'YYYY-MM-DD HH24:MI:SS') as CREATED_DATE,
-            TO_CHAR(CONTENT) AS CONTENT
-        FROM BOARD 
-        WHERE BOARD_ID = #{boardId}
-    </select>
-    
-	<select id="selectBoardFileList" parameterType="int" resultType="map">
-	    SELECT 
-	        FILE_ID,
-	        BOARD_ID,
-	        ORIGINAL_NAME,
-	        STORED_NAME,  FILE_PATH,
-	        FILE_SIZE
-	    FROM BOARD_FILE
-	    WHERE BOARD_ID = #{boardId}
-	</select>	
-
-    <select id="selectFileInfo" parameterType="int" resultType="map">
-        SELECT 
-            ORIGINAL_NAME, STORED_NAME, FILE_PATH
-        FROM BOARD_FILE
-        WHERE FILE_ID = #{fileId}
+        SELECT BOARD_ID, TITLE, WRITER, VIEW_COUNT, 
+        TO_CHAR(CREATED_DATE, 'YYYY-MM-DD HH24:MI:SS') as CREATED_DATE, 
+        TO_CHAR(CONTENT) AS CONTENT FROM BOARD WHERE BOARD_ID = #{boardId}
     </select>
 
-    <update id="updateViewCount" parameterType="int">
-        UPDATE BOARD 
-        SET VIEW_COUNT = VIEW_COUNT + 1 
-        WHERE BOARD_ID = #{boardId}
-    </update>
-    
     <insert id="insertBoard" parameterType="map">
         <selectKey keyProperty="BOARD_ID" resultType="int" order="BEFORE">
             SELECT SEQ_BOARD.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO BOARD (
-            BOARD_ID, TITLE, WRITER, CONTENT, VIEW_COUNT, CREATED_DATE
-        ) VALUES (
-            #{BOARD_ID, jdbcType=INTEGER}, 
-            #{TITLE, jdbcType=VARCHAR}, 
-            #{WRITER, jdbcType=VARCHAR}, 
-            #{CONTENT, jdbcType=VARCHAR}, 
-            0, 
-            SYSDATE
-        )
+        INSERT INTO BOARD (BOARD_ID, TITLE, WRITER, CONTENT, VIEW_COUNT, CREATED_DATE)
+        VALUES (#{BOARD_ID}, #{TITLE}, #{WRITER}, #{CONTENT}, 0, SYSDATE)
     </insert>
 
-    <insert id="insertBoardFile" parameterType="map">
-        INSERT INTO BOARD_FILE (
-            FILE_ID, BOARD_ID, ORIGINAL_NAME, STORED_NAME, FILE_PATH, FILE_SIZE, CREATED_DATE
-        ) VALUES (
-            SEQ_BOARD_FILE.NEXTVAL, 
-            #{BOARD_ID, jdbcType=INTEGER}, 
-            #{ORIGINAL_NAME, jdbcType=VARCHAR}, 
-            #{STORED_NAME, jdbcType=VARCHAR}, 
-            #{FILE_PATH, jdbcType=VARCHAR}, 
-            #{FILE_SIZE, jdbcType=INTEGER}, 
-            SYSDATE
-        )
-    </insert>
-    
-    <delete id="deleteBoardFiles" parameterType="int">
-        DELETE FROM BOARD_FILE WHERE BOARD_ID = #{boardId}
-	</delete>
-	
-	<delete id="deleteBoard" parameterType="int">
-	    DELETE FROM BOARD WHERE BOARD_ID = #{boardId}
-	</delete>
-	
-	<update id="updateBoard" parameterType="map">
-    UPDATE BOARD 
-    SET 
-        TITLE = #{TITLE},
-        CONTENT = #{CONTENT},
-        CREATED_DATE = SYSDATE 
-    WHERE 
-        BOARD_ID = #{BOARD_ID}
+    <update id="updateBoard" parameterType="map">
+        UPDATE BOARD SET TITLE = #{TITLE}, CONTENT = #{CONTENT}, CREATED_DATE = SYSDATE 
+        WHERE BOARD_ID = #{BOARD_ID}
     </update>
-    
-    <delete id="deleteFile" parameterType="int">
-   	 DELETE FROM BOARD_FILE WHERE FILE_ID = #{fileId}
-	</delete>
+
+    <delete id="deleteBoard" parameterType="int">
+        DELETE FROM BOARD WHERE BOARD_ID = #{boardId}
+    </delete>
 
 </mapper>

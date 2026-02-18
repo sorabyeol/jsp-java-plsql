@@ -13,14 +13,15 @@ public class BoardDAO {
     @Autowired
     private SqlSessionTemplate sqlSession;
 
-    // 1. 목록 조회
-    public List<Map<String, Object>> selectBoardList(Map<String, Object> param) {
-        return sqlSession.selectList("board.selectBoardList", param);
+    // 1. 목록 조회 (selectOne으로 변경하여 프로시저 실행에 집중)
+    public void selectBoardList(Map<String, Object> param) {
+        // 프로시저는 OUT 파라미터로 값을 채워주므로 selectOne이 더 안정적입니다.
+        sqlSession.selectOne("board.selectBoardList", param);
     }
 
     // 2. 전체 개수 조회
-    public int selectBoardCount() {
-        return sqlSession.selectOne("board.selectBoardCount");
+    public void selectBoardCount(Map<String, Object> param) {
+        sqlSession.selectOne("board.selectBoardCount", param);
     }
     
     // 3. 상세 조회

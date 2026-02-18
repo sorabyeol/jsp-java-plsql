@@ -1,6 +1,7 @@
 package com.jspjavaplsql.board.service;
 
 import java.io.File; // File 클래스 임포트
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +18,10 @@ import com.jspjavaplsql.board.dao.BoardDAO;
 @Service("boardService")
 public class BoardServiceImpl implements BoardService {
 
+
     @Autowired
     private BoardDAO boardDAO;
-
+ /*
     @Override
     public List<Map<String, Object>> selectBoardList(int page, int pageSize) {
         int start = (page - 1) * pageSize;
@@ -33,7 +35,51 @@ public class BoardServiceImpl implements BoardService {
     public int selectBoardCount() {
         return boardDAO.selectBoardCount();
     }
+*/
 
+    @Override
+    public List<Map<String, Object>> selectBoardList(int page, int pageSize) {
+        // 1. 페이징 계산
+        int startNum = (page - 1) * pageSize + 1;
+        int endNum = page * pageSize;
+
+        // 2. 파라미터와 결과(OUT)를 담을 Map 생성
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("startNum", startNum);
+        paramMap.put("endNum", endNum);
+
+        // 3. 프로시저 호출 
+        // (주의: boardMapper.selectBoardList의 리턴값은 의미가 없으므로 무시합니다.)
+        boardDAO.selectBoardList(paramMap);
+
+        // 4. XML의 #{resultCursor, mode=OUT...} 설정에 의해 
+        // 결과 리스트가 paramMap의 "resultCursor" 키에 자동으로 담겨 있습니다.
+        List<Map<String, Object>> list = (List<Map<String, Object>>) paramMap.get("resultCursor");
+
+        // 5. 결과 반환 (만약 결과가 null이면 빈 리스트 반환)
+        return (list != null) ? list : new ArrayList<>();
+    }
+
+
+    @Override
+    public int selectBoardCount() {
+        // 1. OUT 파라미터를 받아올 빈 Map 생성
+        Map<String, Object> paramMap = new HashMap<>();
+
+        // 2. 프로시저 호출
+        boardDAO.selectBoardCount(paramMap);
+
+        // 3. XML의 #{totalCount, mode=OUT...} 설정에 의해 
+        // 건수가 paramMap의 "totalCount" 키에 담겨 돌아옵니다.
+        Object result = paramMap.get("totalCount");
+        
+        // 4. 안전하게 숫자형으로 변환하여 반환
+        return (result != null) ? Integer.parseInt(String.valueOf(result)) : 0;
+    }
+
+  
+    
+   /****************************************/ 
     @Override
     public Map<String, Object> selectBoardDetail(int boardId) {
         return boardDAO.selectBoardDetail(boardId);
