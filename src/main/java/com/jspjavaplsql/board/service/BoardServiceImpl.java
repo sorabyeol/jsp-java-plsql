@@ -21,7 +21,8 @@ public class BoardServiceImpl implements BoardService {
 
     @Autowired
     private BoardDAO boardDAO;
- /*
+    
+ /* direct sql 방식
     @Override
     public List<Map<String, Object>> selectBoardList(int page, int pageSize) {
         int start = (page - 1) * pageSize;
@@ -60,7 +61,6 @@ public class BoardServiceImpl implements BoardService {
         return (list != null) ? list : new ArrayList<>();
     }
 
-
     @Override
     public int selectBoardCount() {
         // 1. OUT 파라미터를 받아올 빈 Map 생성
@@ -79,12 +79,33 @@ public class BoardServiceImpl implements BoardService {
 
   
     
-   /****************************************/ 
+/* direct sql 방식
     @Override
     public Map<String, Object> selectBoardDetail(int boardId) {
         return boardDAO.selectBoardDetail(boardId);
     }
+*/
+    
+    @Override
+    public Map<String, Object> selectBoardDetail(int boardId) {
+        // 1. 프로시저에 넘길 파라미터 맵 생성
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("boardId", boardId);
 
+        // 2. 프로시저 호출 (XML의 CALL SP_BOARD_DETAIL 실행)
+        boardDAO.selectBoardDetail(paramMap);
+
+        // 3. 커서로 받아온 결과 리스트 꺼내기
+        List<Map<String, Object>> resultList = (List<Map<String, Object>>) paramMap.get("resultCursor");
+
+        // 4. 상세조회는 결과가 1개이므로 첫 번째 Map 반환
+        if (resultList != null && !resultList.isEmpty()) {
+            return resultList.get(0);
+        }
+        return null;
+    }
+    
+/* 간단한 조회나 파일 정보는 생산성을 위해 일반 SQL로 섞어서 쓰는 경우가 아주 많음, 아래 3개 */
     @Override
     public void updateViewCount(int boardId) {
         boardDAO.updateViewCount(boardId);
@@ -99,7 +120,8 @@ public class BoardServiceImpl implements BoardService {
     public Map<String, Object> selectFileInfo(int fileId) {
         return boardDAO.selectFileInfo(fileId);
     }
-    
+  
+    /****************************************/ 
     @Override
     @Transactional
     public void insertBoard(Map<String, Object> map, MultipartFile[] uploadFiles) throws Exception {

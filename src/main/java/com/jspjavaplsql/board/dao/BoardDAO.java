@@ -24,9 +24,17 @@ public class BoardDAO {
         sqlSession.selectOne("board.selectBoardCount", param);
     }
     
+/* direct sql 방식   
     // 3. 상세 조회
     public Map<String, Object> selectBoardDetail(int boardId) {
         return sqlSession.selectOne("board.selectBoardDetail", boardId);
+    }
+*/
+    // 3. 상세 조회 (수정 후)
+    public void selectBoardDetail(Map<String, Object> paramMap) {
+        // 프로시저 호출 시에는 리턴값을 받지 않고, 
+        // 파라미터로 넘긴 paramMap 안에 결과가 담기도록 합니다.
+        sqlSession.selectOne("board.selectBoardDetail", paramMap);
     }
     
     // 4. 조회수 증가

@@ -5,9 +5,14 @@
 
 <mapper namespace="board">
 
-    <resultMap id="boardListMap" type="java.util.Map">
-        <result property="BOARD_ID" column="BOARD_ID"/>
+    <resultMap id="boardListMap" type="map">
+        <result property="BOARD_ID"     column="BOARD_ID" />
+        <result property="TITLE"        column="TITLE" />
+        <result property="WRITER"       column="WRITER" />
+        <result property="VIEW_COUNT"   column="VIEW_COUNT" />
+        <result property="CREATED_DATE" column="CREATED_DATE" />
     </resultMap>
+    
 
     <select id="selectBoardList"
             statementType="CALLABLE"
@@ -29,12 +34,38 @@
         )}
     </select>
 
-    <select id="selectBoardDetail" parameterType="int" resultType="map">
-        SELECT BOARD_ID, TITLE, WRITER, VIEW_COUNT, 
-        TO_CHAR(CREATED_DATE, 'YYYY-MM-DD HH24:MI:SS') as CREATED_DATE, 
-        TO_CHAR(CONTENT) AS CONTENT FROM BOARD WHERE BOARD_ID = #{boardId}
-    </select>
+	<select id="selectBoardDetail" statementType="CALLABLE" parameterType="map">
+	    { CALL SP_BOARD_DETAIL(
+	        #{boardId, mode=IN, jdbcType=INTEGER},
+	        #{resultCursor, mode=OUT, jdbcType=CURSOR, 
+	          javaType=java.sql.ResultSet, 
+	          resultMap=boardListMap}
+	    )}
+	</select>
 
+    
+    <update id="updateViewCount" parameterType="int">
+	    UPDATE BOARD 
+	    SET VIEW_COUNT = VIEW_COUNT + 1 
+	    WHERE BOARD_ID = #{boardId}
+	</update>
+	
+	<select id="selectBoardFileList" parameterType="int" resultType="map">
+	    SELECT FILE_ID, 
+	           ORIGINAL_NAME, 
+	           FILE_SIZE, 
+	           STORED_NAME
+	    FROM BOARD_FILE
+	    WHERE BOARD_ID = #{boardId}
+	</select>
+
+    <select id="selectFileInfo" parameterType="int" resultType="map">
+        SELECT 
+            ORIGINAL_NAME, STORED_NAME, FILE_PATH
+        FROM BOARD_FILE
+        WHERE FILE_ID = #{fileId}
+    </select>
+    
     <insert id="insertBoard" parameterType="map">
         <selectKey keyProperty="BOARD_ID" resultType="int" order="BEFORE">
             SELECT SEQ_BOARD.NEXTVAL FROM DUAL

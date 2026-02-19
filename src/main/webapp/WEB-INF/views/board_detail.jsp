@@ -17,7 +17,9 @@
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #ccc; padding: 10px; font-size: 14px; }
     th { background: #eee; width: 100px; text-align: center; }
-    .content { height: 200px; vertical-align: top; line-height: 1.5; }
+    .content { height: 200px; vertical-align: top; line-height: 1.5; 
+               white-space: pre-wrap; /* 중요: DB의 줄바꿈을 화면에 그대로 표시 */
+             }
 
     /* 2. 파일 목록 영역 */
     .file-list-area { width: 100%; margin-top: 15px; margin-bottom: 20px; }
