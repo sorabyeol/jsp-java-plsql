@@ -28,5 +28,4 @@ public interface BoardService {
     void deleteBoard(int boardId) throws Exception;
     
     void updateBoard(Map<String, Object> map, MultipartHttpServletRequest request, int[] delFiles) throws Exception;
-
 }

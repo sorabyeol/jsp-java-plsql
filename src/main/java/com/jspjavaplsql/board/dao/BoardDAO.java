@@ -52,31 +52,42 @@ public class BoardDAO {
         return sqlSession.selectOne("board.selectFileInfo", fileId);
     }
     
-    // 7. 게시글 등록
+    // 7. 게시글 등록 (프로시저 호출로 변경)
     public void insertBoard(Map<String, Object> map) {
-        sqlSession.insert("board.insertBoard", map);
+        // 프로시저에서 mode=OUT으로 내보낸 BOARD_ID를 map에 담기 위해 selectOne을 사용합니다.
+        sqlSession.selectOne("board.insertBoard", map);
     }
 
-    // 8. 파일 정보 등록
+    // 8. 파일 정보 등록 (프로시저 호출로 변경)
     public void insertBoardFile(Map<String, Object> fileMap) {
-        sqlSession.insert("board.insertBoardFile", fileMap);
+        sqlSession.selectOne("board.insertBoardFile", fileMap);
     }
+
     
     // 9. 파일 삭제 (DB 데이터 삭제)
     public void deleteBoardFiles(int boardId) {
         sqlSession.delete("board.deleteBoardFiles", boardId);
     }
 
-    // 10. 게시글 삭제
+    // 10. 게시글 및 첨부파일 일괄 삭제 (프로시저 호출)
     public void deleteBoard(int boardId) {
-        sqlSession.delete("board.deleteBoard", boardId);
+        // board.xml의 deleteBoard 아이디를 가진 프로시저 호출 구문을 실행합니다.
+        // 파라미터로 boardId(int)를 넘깁니다.
+        sqlSession.selectOne("board.deleteBoard", boardId);
     }
     
+/*
     // 11. 게시글 수정 (에러 해결 포인트!)
     public void updateBoard(Map<String, Object> map) throws Exception {
         // sqlSession 변수를 사용해서 update 메서드를 호출해야 합니다.
         sqlSession.update("board.updateBoard", map); 
     }
+*/    
+    public void updateBoard(Map<String, Object> map) {
+        // 기존 sqlSession.update 대신 selectOne으로 프로시저 실행
+        sqlSession.selectOne("board.updateBoard", map); 
+    }
+    
     
     public void deleteFile(int fileId) {
         sqlSession.delete("board.deleteFile", fileId);

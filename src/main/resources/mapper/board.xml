@@ -5,19 +5,35 @@
 
 <mapper namespace="board">
 
-    <resultMap id="boardListMap" type="map">
+<resultMap id="boardListMap" type="map">
         <result property="BOARD_ID"     column="BOARD_ID" />
         <result property="TITLE"        column="TITLE" />
         <result property="WRITER"       column="WRITER" />
+        <result property="CONTENT"      column="CONTENT" jdbcType="CLOB" javaType="java.lang.String" />
         <result property="VIEW_COUNT"   column="VIEW_COUNT" />
         <result property="CREATED_DATE" column="CREATED_DATE" />
     </resultMap>
     
+    <select id="insertBoard" statementType="CALLABLE" parameterType="map">
+        { CALL SP_BOARD_INSERT(
+            #{TITLE, mode=IN, jdbcType=VARCHAR},
+            #{WRITER, mode=IN, jdbcType=VARCHAR},
+            #{CONTENT, mode=IN, jdbcType=CLOB},
+            #{BOARD_ID, mode=OUT, jdbcType=INTEGER}
+        )}
+    </select>
 
-    <select id="selectBoardList"
-            statementType="CALLABLE"
-            parameterType="map">
+    <select id="insertBoardFile" statementType="CALLABLE" parameterType="map">
+        { CALL SP_BOARD_FILE_INSERT(
+            #{BOARD_ID, mode=IN, jdbcType=INTEGER},
+            #{ORIGINAL_NAME, mode=IN, jdbcType=VARCHAR},
+            #{STORED_NAME, mode=IN, jdbcType=VARCHAR},
+            #{FILE_PATH, mode=IN, jdbcType=VARCHAR},
+            #{FILE_SIZE, mode=IN, jdbcType=INTEGER}
+        )}
+    </select>
 
+    <select id="selectBoardList" statementType="CALLABLE" parameterType="map">
         { CALL SP_BOARD_LIST(
             #{startNum, mode=IN, jdbcType=INTEGER},
             #{endNum, mode=IN, jdbcType=INTEGER},
@@ -25,7 +41,6 @@
               javaType=java.sql.ResultSet,
               resultMap=boardListMap}
         )}
-
     </select>
 
     <select id="selectBoardCount" statementType="CALLABLE" parameterType="map">
@@ -34,53 +49,53 @@
         )}
     </select>
 
-	<select id="selectBoardDetail" statementType="CALLABLE" parameterType="map">
-	    { CALL SP_BOARD_DETAIL(
-	        #{boardId, mode=IN, jdbcType=INTEGER},
-	        #{resultCursor, mode=OUT, jdbcType=CURSOR, 
-	          javaType=java.sql.ResultSet, 
-	          resultMap=boardListMap}
-	    )}
-	</select>
+    <select id="selectBoardDetail" statementType="CALLABLE" parameterType="map">
+        { CALL SP_BOARD_DETAIL(
+            #{boardId, mode=IN, jdbcType=INTEGER},
+            #{resultCursor, mode=OUT, jdbcType=CURSOR, 
+              javaType=java.sql.ResultSet, 
+              resultMap=boardListMap}
+        )}
+    </select>
 
-    
     <update id="updateViewCount" parameterType="int">
-	    UPDATE BOARD 
-	    SET VIEW_COUNT = VIEW_COUNT + 1 
-	    WHERE BOARD_ID = #{boardId}
-	</update>
-	
-	<select id="selectBoardFileList" parameterType="int" resultType="map">
-	    SELECT FILE_ID, 
-	           ORIGINAL_NAME, 
-	           FILE_SIZE, 
-	           STORED_NAME
-	    FROM BOARD_FILE
-	    WHERE BOARD_ID = #{boardId}
-	</select>
+        UPDATE BOARD SET VIEW_COUNT = VIEW_COUNT + 1 WHERE BOARD_ID = #{boardId}
+    </update>
+    
+    <select id="selectBoardFileList" parameterType="int" resultType="map">
+        SELECT FILE_ID, ORIGINAL_NAME, FILE_SIZE, STORED_NAME
+        FROM BOARD_FILE
+        WHERE BOARD_ID = #{boardId}
+    </select>
 
     <select id="selectFileInfo" parameterType="int" resultType="map">
-        SELECT 
-            ORIGINAL_NAME, STORED_NAME, FILE_PATH
+        SELECT ORIGINAL_NAME, STORED_NAME, FILE_PATH
         FROM BOARD_FILE
         WHERE FILE_ID = #{fileId}
     </select>
-    
-    <insert id="insertBoard" parameterType="map">
-        <selectKey keyProperty="BOARD_ID" resultType="int" order="BEFORE">
-            SELECT SEQ_BOARD.NEXTVAL FROM DUAL
-        </selectKey>
-        INSERT INTO BOARD (BOARD_ID, TITLE, WRITER, CONTENT, VIEW_COUNT, CREATED_DATE)
-        VALUES (#{BOARD_ID}, #{TITLE}, #{WRITER}, #{CONTENT}, 0, SYSDATE)
-    </insert>
 
+<!--  
     <update id="updateBoard" parameterType="map">
         UPDATE BOARD SET TITLE = #{TITLE}, CONTENT = #{CONTENT}, CREATED_DATE = SYSDATE 
         WHERE BOARD_ID = #{BOARD_ID}
     </update>
+-->
+    <select id="updateBoard" statementType="CALLABLE" parameterType="map">
+    { CALL SP_BOARD_UPDATE(
+        #{BOARD_ID, mode=IN, jdbcType=INTEGER},
+        #{TITLE, mode=IN, jdbcType=VARCHAR},
+        #{CONTENT, mode=IN, jdbcType=CLOB}
+    )}
+	</select>
+    
+	<delete id="deleteBoardFiles" parameterType="int">
+	    DELETE FROM BOARD_FILE 
+	    WHERE BOARD_ID = #{boardId}
+	</delete>
 
-    <delete id="deleteBoard" parameterType="int">
-        DELETE FROM BOARD WHERE BOARD_ID = #{boardId}
-    </delete>
-
+	<select id="deleteBoard" statementType="CALLABLE" parameterType="int">
+	    { CALL SP_BOARD_DELETE(
+	        #{boardId, mode=IN, jdbcType=INTEGER}
+	    )}
+	</select>
 </mapper>
