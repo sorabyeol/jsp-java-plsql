@@ -1,4 +1,4 @@
-package com.jspjavadirectsql.board.service;
+package com.jspjavaplsql.board.service;
 
 import java.util.List;
 import java.util.Map;
